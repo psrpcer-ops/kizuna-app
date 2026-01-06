@@ -206,14 +206,34 @@
         const useVoice = (onResult) => {
             const [isSpeak, setSpeak] = useState(false);
             const start = () => {
+                // Check for file protocol which blocks SpeechRecognition in many browsers
+                if (window.location.protocol === 'file:') {
+                    alert('【環境エラー】\n音声入力はセキュリティ上「サーバー環境(http/https)」でのみ動作します。\nファイルを直接開くのではなく、VS CodeのLive Serverなどを使用するか、Webサイトとして公開してください。');
+                    return;
+                }
+
                 const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
-                if (!Rec) return alert('このブラウザは音声入力に対応していません');
-                const rec = new Rec(); rec.lang = 'ja-JP';
-                rec.onstart = () => setSpeak(true);
-                rec.onresult = (e) => { onResult(e.results[0][0].transcript); setSpeak(false); };
-                rec.onerror = () => setSpeak(false);
-                rec.onend = () => setSpeak(false);
-                rec.start();
+                if (!Rec) {
+                    alert('このブラウザは音声入力に対応していません。\nGoogle ChromeまたはSafariを推奨します。');
+                    return;
+                }
+
+                try {
+                    const rec = new Rec();
+                    rec.lang = 'ja-JP';
+                    rec.onstart = () => setSpeak(true);
+                    rec.onresult = (e) => { onResult(e.results[0][0].transcript); setSpeak(false); };
+                    rec.onerror = (e) => {
+                        console.error('Speech rec error:', e.error);
+                        if (e.error === 'not-allowed') alert('マイクの使用が許可されていません。');
+                        setSpeak(false);
+                    };
+                    rec.onend = () => setSpeak(false);
+                    rec.start();
+                } catch (e) {
+                    console.error('Speech init error:', e);
+                    setSpeak(false);
+                }
             };
             return { isSpeak, start };
         };
@@ -482,6 +502,8 @@
             const [showSettings, setShowSettings] = useState(false), [them, setThem] = useState('#8b5cf6'), [clicks, setClicks] = useState(0), [pass, setPass] = useState(''), [showAuth, setShowAuth] = useState(false), [isMuted, setIsMuted] = useState(false);
             const [ntIn, setNtIn] = useState(''), [ntDa, setNtDa] = useState(''), [tosAgreed, setTosAgreed] = useState(false), [timer, setTimer] = useState(null);
             const [niIn, setNiIn] = useState(''), [niDa, setNiDa] = useState('');
+            const { isSpeak: vsT, start: vtS } = useVoice(setNtIn);
+            const { isSpeak: vsI, start: viS } = useVoice(setNiIn);
 
 
             const [ntDur, setNtDur] = useState('25');
@@ -816,7 +838,12 @@
 
                                         {showAddForm && (
                                             <div className="bg-white p-8 rounded-[45px] border-2 border-primary/10 shadow-xl space-y-6 animate-slide-up">
-                                                <input placeholder="何を頑張る？" value={ntIn} onChange={e => setNtIn(e.target.value)} className="w-full bg-gray-50 p-6 rounded-3xl font-black outline-none border-none focus:ring-4 focus:ring-primary/10 transition-all text-sm" />
+                                                <div className="relative">
+                                                    <input placeholder="何を頑張る？" value={ntIn} onChange={e => setNtIn(e.target.value)} className="w-full bg-gray-50 p-6 pr-16 rounded-3xl font-black outline-none border-none focus:ring-4 focus:ring-primary/10 transition-all text-sm" />
+                                                    <button type="button" onClick={vtS} className={`absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-2xl transition-all z-50 cursor-pointer ${vsT ? 'bg-primary text-white animate-pulse' : 'bg-white text-gray-400 shadow-sm'}`}>
+                                                        <Icons.Mic className="w-5 h-5 pointer-events-none" />
+                                                    </button>
+                                                </div>
                                                 <div className="space-y-4">
                                                     <div className="flex flex-wrap gap-2">
                                                         {[5, 10, 15, 20, 25].map(m => (
@@ -929,7 +956,12 @@
 
                                         {showAddForm && (
                                             <div className="bg-white p-8 rounded-[45px] border-2 border-primary/10 shadow-xl space-y-6 animate-slide-up">
-                                                <input placeholder="必要なものは？" value={niIn} onChange={e => setNiIn(e.target.value)} className="w-full bg-gray-50 p-6 rounded-3xl font-black outline-none border-none focus:ring-4 focus:ring-primary/10 transition-all text-sm" />
+                                                <div className="relative">
+                                                    <input placeholder="必要なものは？" value={niIn} onChange={e => setNiIn(e.target.value)} className="w-full bg-gray-50 p-6 pr-16 rounded-3xl font-black outline-none border-none focus:ring-4 focus:ring-primary/10 transition-all text-sm" />
+                                                    <button type="button" onClick={viS} className={`absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-2xl transition-all z-50 cursor-pointer ${vsI ? 'bg-primary text-white animate-pulse' : 'bg-white text-gray-400 shadow-sm'}`}>
+                                                        <Icons.Mic className="w-5 h-5 pointer-events-none" />
+                                                    </button>
+                                                </div>
                                                 <div className="space-y-4">
                                                     <div className="space-y-3">
                                                         <input type="date" value={niDa} onChange={e => setNiDa(e.target.value)} className="w-full bg-gray-50 p-6 rounded-3xl text-xs font-black outline-none border-none" />
