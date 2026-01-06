@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KIZUNA - 17期生委員長配信</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Zen+Maru+Gothic:wght@400;700;900&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Zen Maru Gothic"', 'sans-serif'] },
+                    colors: { primary: 'var(--primary-color)', 'primary-hover': 'var(--primary-hover)', 'primary-bg': 'var(--primary-bg)' },
+                    animation: {
+                        'slide-up': 'slideUp 0.3s ease-out forwards',
+                        'bounce-soft': 'bounceSoft 2s infinite',
+                        'task-check': 'taskCheck 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+                        'task-uncheck': 'taskUncheck 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards'
+                    },
+                    keyframes: {
+                        slideUp: { '0%': { transform: 'translateY(10px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } },
+                        bounceSoft: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-5px)' } },
+                        taskCheck: {
+                            '0%': { transform: 'scale(1)', opacity: '1' },
+                            '30%': { transform: 'scale(1.05) translateX(2px)', opacity: '0.8' },
+                            '60%': { transform: 'scale(0.9) translateX(-1px)', opacity: '0.6' },
+                            '100%': { transform: 'scale(0.96)', opacity: '0.4' }
+                        },
+                        taskUncheck: {
+                            '0%': { transform: 'scale(0.96)', opacity: '0.4' },
+                            '50%': { transform: 'scale(1.08)', opacity: '1' },
+                            '100%': { transform: 'scale(1)', opacity: '1' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --primary-color: #8b5cf6;
+            --primary-hover: #7c3aed;
+            --primary-bg: rgba(139, 92, 246, 0.1);
+        }
+
+        body {
+            background-color: #f3f4f6;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .pb-safe {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        @keyframes pop {
+            0% {
+                transform: scale(0.8);
+            }
+
+            50% {
+                transform: scale(1.2);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .animate-pop {
+            animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useRef } = React;
+        let globalAudioCtx = null;
+
+        // --- Firebase Config ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyAWzL6nRAJWmEehU3LngaBK_Fbv5EteldU",
+            authDomain: "kizuna-de27d.firebaseapp.com",
+            projectId: "kizuna-de27d",
+            storageBucket: "kizuna-de27d.firebasestorage.app",
+            messagingSenderId: "217216614176",
+            appId: "1:217216614176:web:3c3b75f1870b9a6b48a145",
+            measurementId: "G-HPF25NKWTS"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // --- Icons ---
+        const Icons = {
+            Home: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>,
+            List: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>,
+            Calendar: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>,
+            FileText: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>,
+            BarChart: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></svg>,
+            Settings: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>,
+            CheckCircle: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>,
+            Plus: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>,
+            Trash: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>,
+            X: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>,
+            Mic: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" /></svg>,
+            Play: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3" /></svg>,
+            Pause: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg>,
+            Volume2: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><path d="M19.07 4.93a10 10 0 0 1 0 14.14" /><path d="M15.54 8.46a5 5 0 0 1 0 7.07" /></svg>,
+            VolumeX: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><line x1="23" y1="9" x2="17" y2="15" /><line x1="17" y1="9" x2="23" y2="15" /></svg>,
+            ChevronLeft: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>,
+            ChevronRight: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>,
+            Activity: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>,
+            ShoppingBag: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>,
+            Circle: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /></svg>,
+        };
+
+
+        // --- Timer Component ---
+        const TimerModal = ({ task, initialDuration, onClose, onComplete, isMuted, setIsMuted }) => {
+            const [timeLeft, setTimeLeft] = useState(initialDuration * 60);
+            const [isPaused, setIsPaused] = useState(false);
+            const [showConfirm, setShowConfirm] = useState(false);
+            const alarmRef = useRef(null);
+
+            const playAlarm = () => {
+                if (isMuted) return;
+                try {
+                    if (!globalAudioCtx) globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    if (globalAudioCtx.state === 'suspended') globalAudioCtx.resume();
+                    const ctx = globalAudioCtx;
+                    const beep = (time) => {
+                        const o = ctx.createOscillator(); const g = ctx.createGain();
+                        o.connect(g); g.connect(ctx.destination);
+                        o.type = 'sine'; o.frequency.setValueAtTime(880, time);
+                        g.gain.setValueAtTime(0, time); g.gain.linearRampToValueAtTime(0.1, time + 0.1); g.gain.exponentialRampToValueAtTime(0.0001, time + 0.5);
+                        o.start(time); o.stop(time + 0.5);
+                    };
+                    beep(ctx.currentTime); beep(ctx.currentTime + 0.6);
+                    alarmRef.current = setInterval(() => { beep(ctx.currentTime); beep(ctx.currentTime + 0.6); }, 2000);
+                } catch (e) { console.error(e); }
+            };
+            const stopAlarm = () => { if (alarmRef.current) { clearInterval(alarmRef.current); alarmRef.current = null; } };
+
+            useEffect(() => {
+                if (isPaused || showConfirm) return;
+                if (timeLeft <= 0) { setShowConfirm(true); playAlarm(); return; }
+                const t = setInterval(() => setTimeLeft(p => p - 1), 1000);
+                return () => clearInterval(t);
+            }, [timeLeft, isPaused, showConfirm]);
+            useEffect(() => () => stopAlarm(), []);
+            const format = (s) => `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
+            const addTime = (m) => setTimeLeft(prev => prev + m * 60);
+
+            if (showConfirm) return (
+                <div className="fixed inset-0 z-[200] bg-gray-900/95 flex items-center justify-center p-6">
+                    <div className="bg-white rounded-[40px] p-8 w-full max-w-sm text-center">
+                        <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl animate-bounce">⏰</div>
+                        <h2 className="text-2xl font-black text-gray-800 mb-2">お疲れ様です！</h2>
+                        <p className="text-gray-400 text-sm mb-8">よく頑張りましたね。</p>
+                        <button onClick={() => { stopAlarm(); onComplete(); }} className="w-full bg-green-500 text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition-all mb-4 text-lg">できた！</button>
+                        <div className="grid grid-cols-2 gap-3">
+                            <button onClick={() => { stopAlarm(); setTimeLeft(task.duration * 60); setShowConfirm(false); }} className="bg-gray-100 text-gray-500 font-bold py-3 rounded-2xl active:scale-95 transition-all">もう一度</button>
+                            <button onClick={() => { stopAlarm(); setShowConfirm(false); addTime(5); }} className="bg-primary/10 text-primary font-bold py-3 rounded-2xl active:scale-95 transition-all">+5分延長</button>
+                        </div>
+                    </div>
+                </div>
+            );
+            return (
+                <div className="fixed inset-0 z-[200] bg-gray-900 text-white flex flex-col items-center justify-center">
+                    <button onClick={onClose} className="absolute top-8 right-8 p-2 text-white/30 hover:text-white transition-colors"><Icons.X className="w-8 h-8" /></button>
+                    <div className="text-center w-full px-12">
+                        <h2 className="text-xl font-bold mb-12 text-primary/80 tracking-widest uppercase">{task.title}</h2>
+                        <div className="text-[100px] font-black tabular-nums leading-none tracking-tighter mb-16">{format(timeLeft)}</div>
+                        <div className="flex justify-center items-center gap-12">
+                            <button onClick={() => addTime(1)} className="text-xs font-black text-white/40 hover:text-white transition-colors">+1m</button>
+                            <button onClick={() => setIsPaused(!isPaused)} className="w-24 h-24 rounded-full bg-white text-gray-900 flex items-center justify-center shadow-2xl active:scale-90 transition-all">{isPaused ? <Icons.Play className="w-10 h-10 fill-current ml-1" /> : <Icons.Pause className="w-10 h-10 fill-current" />}</button>
+                            <button onClick={() => addTime(10)} className="text-xs font-black text-white/40 hover:text-white transition-colors">+10m</button>
+                        </div>
+                    </div>
+                    <button onClick={() => { if (!isMuted) stopAlarm(); setIsMuted(!isMuted); }} className="absolute bottom-12 right-12 p-5 bg-white/5 rounded-3xl transition-all active:scale-90">{isMuted ? <Icons.VolumeX className="w-6 h-6 text-white/40" /> : <Icons.Volume2 className="w-6 h-6 text-primary animate-pulse" />}</button>
+                </div>
+            );
+        };
+
+        // --- Voice Input Hook ---
+        const useVoice = (onResult) => {
+            const [isSpeak, setSpeak] = useState(false);
+            const start = () => {
+                const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!Rec) return alert('このブラウザは音声入力に対応していません');
+                const rec = new Rec(); rec.lang = 'ja-JP';
+                rec.onstart = () => setSpeak(true);
+                rec.onresult = (e) => { onResult(e.results[0][0].transcript); setSpeak(false); };
+                rec.onerror = () => setSpeak(false);
+                rec.onend = () => setSpeak(false);
+                rec.start();
+            };
+            return { isSpeak, start };
+        };
+
+        // --- TOS Modal Component ---
+        const TOSModal = ({ onAgree }) => {
+            const [agreed, setAgreed] = useState(false);
+            return (
+                <div className="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-md flex items-center justify-center p-6">
+                    <div className="bg-white rounded-[40px] w-full max-w-sm overflow-hidden shadow-2xl animate-slide-up flex flex-col max-h-[85vh]">
+                        <div className="p-8 border-b border-gray-100 flex-shrink-0">
+                            <h2 className="text-xl font-black text-gray-800 text-center tracking-tighter">【KIZUNAアプリ 利用規約】</h2>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-8 space-y-6 text-gray-600 text-sm leading-relaxed scrollbar-hide">
+                            <section><h3 className="font-black text-gray-800 mb-2">第1条（利用対象）</h3><p>本アプリケーションは「17期生」専用のプラットフォームです。許可された対象者以外の利用および情報の共有を固く禁じます。</p></section>
+                            <section><h3 className="font-black text-gray-800 mb-2">第2条（免責事項）</h3><p>アプリ製作者は、情報の保護および管理に細心の注意を払っておりますが、万一、個人情報の漏洩やデータの毀損等が発生した場合、製作者はその理由を問わず一切の責任を負いかねます。</p></section>
+                            <section><h3 className="font-black text-gray-800 mb-2">第3条（禁止事項）</h3><p>本アプリの円滑な運営を妨げる行為、または悪意のあるデータの入力、システムの改ざん等の行為を一切禁止します。</p></section>
+                        </div>
+                        <div className="p-8 border-t border-gray-100 bg-gray-50 flex-shrink-0">
+                            <label className="flex items-center gap-3 mb-6 cursor-pointer group">
+                                <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} className="peer sr-only" />
+                                <div className="w-6 h-6 border-2 border-gray-300 rounded-lg peer-checked:bg-primary peer-checked:border-primary transition-all flex items-center justify-center"><Icons.CheckCircle className={`w-4 h-4 text-white ${agreed ? 'scale-100' : 'scale-0'}`} /></div>
+                                <span className={`text-xs font-bold ${agreed ? 'text-gray-800' : 'text-gray-400'}`}>上記の内容に同意します</span>
+                            </label>
+                            <button onClick={onAgree} disabled={!agreed} className={`w-full py-5 rounded-2xl font-black text-sm transition-all ${agreed ? 'bg-primary text-white shadow-xl' : 'bg-gray-200 text-gray-400 opacity-50'}`}>同意して利用を開始する</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- Admin Components ---
+        const AdminPortal = ({ onClose, commonTasks = [], commonItems = [], materials = [], delItem }) => {
+            const [tT, setTT] = useState('tasks');
+            const [fields, setFields] = useState({ title: '', date: '', desc: '', url: '', info: '', evTitle: '', evDate: '' });
+            const [msg, setMsg] = useState('');
+            const showMsg = (txt) => { setMsg(txt); confetti({ particleCount: 100 }); setTimeout(() => setMsg(''), 3000); };
+
+
+            const addH = (e) => {
+                e.preventDefault(); if (!fields.title || !fields.date) return;
+                db.collection('common_tasks').add({ title: fields.title, deadline: fields.date.replace(/-/g, '/'), detail: fields.desc, completed: false, created: Date.now() });
+                setFields({ ...fields, title: '', date: '', desc: '' }); showMsg('宿題を配信しました！');
+            };
+            const addM = (e) => {
+                e.preventDefault(); if (!fields.title || !fields.url) return;
+                db.collection('materials').add({ title: fields.title, url: fields.url, date: new Date().toLocaleDateString(), created: Date.now() });
+                setFields({ ...fields, title: '', url: '' }); showMsg('資料を配信しました！');
+            };
+            const addI = (e) => {
+                e.preventDefault(); if (!fields.title || !fields.date) return;
+                db.collection('common_items').add({ title: fields.title, deadline: fields.date.replace(/-/g, '/'), completed: false, created: Date.now() });
+                setFields({ ...fields, title: '', date: '' }); showMsg('持ち物を配信しました！');
+            };
+            const updateInfo = (e) => {
+                e.preventDefault(); if (!fields.info) return;
+                db.collection('reminders').doc('latest').set({ text: fields.info, updated: Date.now() });
+                setFields({ ...fields, info: '' }); showMsg('メッセージを更新しました！');
+            };
+            const updateEvent = (e) => {
+                e.preventDefault(); if (!fields.evTitle || !fields.evDate) return;
+                db.collection('reminders').doc('event').set({ title: fields.evTitle, date: fields.evDate, updated: Date.now() });
+                setFields({ ...fields, evTitle: '', evDate: '' }); showMsg('イベント情報を更新しました！');
+            };
+
+
+            return (
+                <div className="fixed inset-0 z-[500] bg-black flex flex-col animate-slide-up overflow-hidden text-white font-sans">
+                    <header className="p-8 border-b border-white/10 flex justify-between items-center bg-black/50 backdrop-blur-xl">
+                        <div className="flex items-center gap-4"><div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center font-black text-black text-xl">K</div><h2 className="font-black text-lg tracking-tighter">ADMIN PORTAL</h2></div>
+                        <button onClick={onClose} className="bg-white/5 border border-white/20 px-6 py-3 rounded-2xl font-black text-xs">CLOSE</button>
+                    </header>
+                    <main className="flex-1 overflow-y-auto p-6 max-w-2xl mx-auto w-full space-y-8 scrollbar-hide pb-32">
+                        {msg && <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[600] bg-cyan-500 text-black px-10 py-5 rounded-full font-black shadow-xl animate-bounce">⚡ {msg}</div>}
+                        <div className="flex gap-4 p-2 bg-white/5 border border-white/10 rounded-[35px] overflow-x-auto scrollbar-hide">
+                            {[{ id: 'tasks', l: '宿題' }, { id: 'items', l: '持ち物' }, { id: 'materials', l: '資料' }, { id: 'info', l: '連絡' }, { id: 'event', l: '目標' }].map(tab => (
+                                <button key={tab.id} onClick={() => setTT(tab.id)} className={`px-6 py-5 rounded-[28px] font-black text-xs transition-all whitespace-nowrap ${tT === tab.id ? 'bg-white text-black' : 'text-gray-500'}`}>{tab.l}</button>
+                            ))}
+                        </div>
+
+
+                        {tT === 'tasks' && (
+                            <div className="space-y-10">
+                                <form onSubmit={addH} className="space-y-6 animate-slide-up">
+                                    <input type="text" value={fields.title} onChange={e => setFields({ ...fields, title: e.target.value })} placeholder="TITLE" className="w-full bg-transparent p-7 rounded-3xl border-2 border-white/20 outline-none focus:border-cyan-400 transition-all font-bold" />
+                                    <input type="date" value={fields.date} onChange={e => setFields({ ...fields, date: e.target.value })} className="w-full bg-transparent p-7 rounded-3xl border-2 border-white/20 outline-none focus:border-cyan-400 transition-all font-bold" style={{ colorScheme: 'dark' }} />
+                                    <textarea value={fields.desc} onChange={e => setFields({ ...fields, desc: e.target.value })} placeholder="INFO" className="w-full bg-transparent p-7 rounded-3xl border-2 border-white/20 h-44 outline-none focus:border-cyan-400 transition-all font-bold" />
+                                    <button type="submit" className="w-full bg-cyan-500 text-black font-black py-7 rounded-3xl shadow-lg">Broadcast Task</button>
+                                </form>
+                                <div className="space-y-4 pt-4">
+                                    <p className="text-[10px] font-black text-white/30 tracking-widest uppercase ml-2">Currently Broadcasting</p>
+                                    {commonTasks.map(t => (
+                                        <div key={t.id} className="flex items-center gap-4 bg-white/5 border border-white/10 p-5 rounded-3xl">
+                                            <div className="flex-1 min-w-0"><p className="font-bold truncate text-sm">{t.title}</p><p className="text-[10px] text-white/40">{t.deadline}</p></div>
+                                            <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); delItem('common_tasks', t.id); }} className="p-3 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"><Icons.Trash className="w-4 h-4" /></button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        {tT === 'items' && (
+                            <div className="space-y-10">
+                                <form onSubmit={addI} className="space-y-6 animate-slide-up">
+                                    <input type="text" value={fields.title} onChange={e => setFields({ ...fields, title: e.target.value })} placeholder="持ち物名" className="w-full bg-transparent p-7 rounded-3xl border-2 border-white/20 outline-none focus:border-cyan-400 transition-all font-bold" />
+                                    <input type="date" value={fields.date} onChange={e => setFields({ ...fields, date: e.target.value })} className="w-full bg-transparent p-7 rounded-3xl border-2 border-white/20 outline-none focus:border-cyan-400 transition-all font-bold" style={{ colorScheme: 'dark' }} />
+                                    <button type="submit" className="w-full bg-yellow-500 text-black font-black py-7 rounded-3xl shadow-lg">Broadcast Item</button>
+                                </form>
+                                <div className="space-y-4 pt-4">
+                                    <p className="text-[10px] font-black text-white/30 tracking-widest uppercase ml-2">Currently Broadcasting</p>
+                                    {commonItems.map(t => (
+                                        <div key={t.id} className="flex items-center gap-4 bg-white/5 border border-white/10 p-5 rounded-3xl">
+                                            <div className="flex-1 min-w-0"><p className="font-bold truncate text-sm">{t.title}</p><p className="text-[10px] text-white/40">{t.deadline}</p></div>
+                                            <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); delItem('common_items', t.id); }} className="p-3 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"><Icons.Trash className="w-4 h-4" /></button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+
+                        {tT === 'materials' && (
+                            <div className="space-y-10">
+                                <form onSubmit={addM} className="space-y-6 animate-slide-up">
+                                    <input type="text" value={fields.title} onChange={e => setFields({ ...fields, title: e.target.value })} placeholder="NAME" className="w-full bg-transparent p-7 rounded-3xl border-2 border-white/20 outline-none focus:border-cyan-400 font-bold" />
+                                    <input type="url" value={fields.url} onChange={e => setFields({ ...fields, url: e.target.value })} placeholder="HTTPS://..." className="w-full bg-transparent p-7 rounded-3xl border-2 border-white/20 outline-none focus:border-cyan-400 font-bold" />
+                                    <button type="submit" className="w-full bg-white text-black font-black py-7 rounded-3xl shadow-lg">Deploy Material</button>
+                                </form>
+                                <div className="space-y-4 pt-4">
+                                    <p className="text-[10px] font-black text-white/30 tracking-widest uppercase ml-2">Currently Broadcasting</p>
+                                    {materials.map(m => (
+                                        <div key={m.id} className="flex items-center gap-4 bg-white/5 border border-white/10 p-5 rounded-3xl">
+                                            <div className="flex-1 min-w-0"><p className="font-bold truncate text-sm">{m.title}</p></div>
+                                            <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); delItem('materials', m.id); }} className="p-3 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"><Icons.Trash className="w-4 h-4" /></button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {tT === 'info' && (
+                            <form onSubmit={updateInfo} className="space-y-6 animate-slide-up">
+                                <textarea value={fields.info} onChange={e => setFields({ ...fields, info: e.target.value })} placeholder="ADMIN MESSAGEを入力..." className="w-full bg-transparent p-7 rounded-3xl border-2 border-white/20 h-44 outline-none focus:border-cyan-400 transition-all font-bold text-lg" />
+                                <button type="submit" className="w-full bg-cyan-500 text-black font-black py-7 rounded-3xl shadow-lg">Update Message</button>
+                            </form>
+                        )}
+                        {tT === 'event' && (
+                            <form onSubmit={updateEvent} className="space-y-6 animate-slide-up">
+                                <input type="text" value={fields.evTitle} onChange={e => setFields({ ...fields, evTitle: e.target.value })} placeholder="目標イベント名 (例: 期末テスト)" className="w-full bg-transparent p-7 rounded-3xl border-2 border-white/20 outline-none focus:border-cyan-400 transition-all font-bold" />
+                                <input type="date" value={fields.evDate} onChange={e => setFields({ ...fields, evDate: e.target.value })} className="w-full bg-transparent p-7 rounded-3xl border-2 border-white/20 outline-none focus:border-cyan-400 transition-all font-bold" style={{ colorScheme: 'dark' }} />
+                                <button type="submit" className="w-full bg-cyan-500 text-black font-black py-7 rounded-3xl shadow-lg">Target Set</button>
+                            </form>
+                        )}
+
+                    </main>
+                </div>
+            );
+        };
+
+        const MonthlyCalendar = ({ commonTasks = [], personalTasks = [], commonItems = [], personalItems = [], completedCT = [], setCompletedCT, completedCI = [], setCompletedCI, pT = [], setPT, pI = [], setPI, triggerBurst }) => {
+            const [cur, setCur] = useState(new Date()), [sel, setSel] = useState(new Date());
+            const calendarData = useMemo(() => {
+                const y = cur.getFullYear(), m = cur.getMonth();
+                const start = new Date(y, m, 1).getDay(), end = new Date(y, m + 1, 0).getDate();
+                const days = Array.from({ length: end }, (_, i) => i + 1);
+                return { y, m, start, days };
+            }, [cur]);
+            const { y, m, start, days } = calendarData;
+            return (
+                <div className="space-y-6 pb-24 animate-slide-up">
+                    <div className="bg-white rounded-[40px] p-8 shadow-sm border border-gray-100">
+                        <div className="flex justify-between items-center mb-8"><h3 className="text-xl font-black">{y}年 {m + 1}月</h3><div className="flex gap-2"><button onClick={() => setCur(new Date(y, m - 1, 1))} className="p-2 bg-gray-50 rounded-xl"><Icons.ChevronLeft /></button><button onClick={() => setCur(new Date(y, m + 1, 1))} className="p-2 bg-gray-50 rounded-xl"><Icons.ChevronRight /></button></div></div>
+                        <div className="grid grid-cols-7 gap-1 text-center font-black text-[10px] text-gray-300 mb-6 uppercase">
+                            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => <div key={day}>{day}</div>)}
+                        </div>
+                        <div className="grid grid-cols-7 gap-3">{Array(start).fill(0).map((_, i) => <div key={i} />)}{days.map(d => {
+                            const isS = sel.getDate() === d && sel.getMonth() === m && sel.getFullYear() === y;
+                            const dStr = `${y}-${(m + 1).toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
+                            const dSlash = dStr.replace(/-/g, '/');
+                            const hasCT = commonTasks.some(t => t.deadline === dSlash);
+                            const hasPT = personalTasks.some(t => t.date && t.date.startsWith(dStr));
+                            const hasCI = commonItems.some(t => t.deadline === dSlash);
+                            const hasPI = personalItems.some(t => t.date && t.date.startsWith(dStr));
+
+                            return (
+                                <div key={d} onClick={() => setSel(new Date(y, m, d))} className={`aspect-square rounded-2xl flex flex-col items-center justify-center font-black transition-all relative cursor-pointer ${isS ? 'bg-primary text-white shadow-lg scale-110' : 'hover:bg-gray-50 text-gray-800'}`}>
+                                    <span>{d}</span>
+                                    <div className="absolute bottom-2 flex gap-1">
+                                        {(hasCT || hasCI) && <div className={`w-1 h-1 rounded-full ${isS ? 'bg-white' : 'bg-red-400'}`} />}
+                                        {(hasPT || hasPI) && <div className={`w-1 h-1 rounded-full ${isS ? 'bg-white/80' : 'bg-primary'}`} />}
+                                    </div>
+                                </div>
+                            );
+                        })}</div>
+                    </div>
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-2 px-2">
+                            <Icons.Calendar className="w-3 h-3 text-gray-300" />
+                            <h4 className="font-black text-[10px] text-gray-400 uppercase tracking-widest">{sel.getMonth() + 1}/{sel.getDate()} Tasks</h4>
+                        </div>
+                        {(() => {
+                            const ds = `${y}-${(m + 1).toString().padStart(2, '0')}-${sel.getDate().toString().padStart(2, '0')}`, dsl = ds.replace(/-/g, '/');
+                            const ct = commonTasks.filter(t => t.deadline === dsl), pt = personalTasks.filter(t => t.date && t.date.startsWith(ds));
+                            const ci = commonItems.filter(t => t.deadline === dsl), pi = personalItems.filter(t => t.date && t.date.startsWith(ds));
+                            const all = [
+                                ...ct.map(x => ({ ...x, tp: 'C', cat: 'T' })),
+                                ...pt.map(x => ({ ...x, tp: 'P', cat: 'T' })),
+                                ...ci.map(x => ({ ...x, tp: 'C', cat: 'I' })),
+                                ...pi.map(x => ({ ...x, tp: 'P', cat: 'I' }))
+                            ];
+                            if (!all.length) return <div className="p-8 text-center text-[9px] font-black text-gray-200 border-2 border-dashed border-gray-50 rounded-[30px] uppercase">No Plan</div>;
+                            return all.map((t, i) => {
+                                let isDone = false;
+                                if (t.cat === 'T') isDone = t.tp === 'C' ? completedCT.includes(t.id) : t.completed;
+                                else isDone = t.tp === 'C' ? completedCI.includes(t.id) : t.completed;
+
+                                return (
+                                    <div key={i} onClick={(e) => {
+                                        if (t.cat === 'T') {
+                                            if (t.tp === 'C') {
+                                                if (!isDone) triggerBurst(e);
+                                                setCompletedCT(isDone ? completedCT.filter(id => id !== t.id) : [...completedCT, t.id]);
+                                            } else {
+                                                if (!isDone) triggerBurst(e);
+                                                const newPT = [...pT];
+                                                const idx = newPT.findIndex(x => x.id === t.id);
+                                                if (idx !== -1) { newPT[idx].completed = !newPT[idx].completed; setPT(newPT); }
+                                            }
+                                        } else {
+                                            if (t.tp === 'C') {
+                                                if (!isDone) triggerBurst(e);
+                                                setCompletedCI(isDone ? completedCI.filter(id => id !== t.id) : [...completedCI, t.id]);
+                                            } else {
+                                                if (!isDone) triggerBurst(e);
+                                                const newPI = [...pI];
+                                                const idx = newPI.findIndex(x => x.id === t.id);
+                                                if (idx !== -1) { newPI[idx].completed = !newPI[idx].completed; setPI(newPI); }
+                                            }
+                                        }
+                                    }} className={`p-5 rounded-[30px] border flex items-center gap-4 animate-slide-up transition-all active:scale-95 cursor-pointer ${isDone ? 'opacity-40 grayscale bg-gray-50' : t.cat === 'I' ? 'bg-yellow-50 border-yellow-100' : 'bg-white shadow-sm border-gray-100'}`}>
+                                        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${isDone ? 'bg-gray-100 text-gray-400' : t.cat === 'I' ? 'bg-yellow-100 text-yellow-600' : 'bg-primary/10 text-primary'}`}>
+                                            {isDone ? <Icons.CheckCircle /> : t.cat === 'I' ? (Icons.ShoppingBag ? <Icons.ShoppingBag /> : <Icons.Circle />) : (Icons.FileText ? <Icons.FileText /> : <Icons.Circle />)}
+                                        </div>
+
+                                        <div className="flex-1 min-w-0">
+                                            <p className={`text-sm font-black truncate ${isDone ? 'line-through text-gray-400' : 'text-gray-800'}`}>{t.title}</p>
+                                            <p className={`text-[8px] font-black uppercase tracking-[0.2em] ${isDone ? 'text-gray-300' : t.cat === 'I' ? 'text-yellow-600/60' : 'text-primary'}`}>{t.cat === 'I' ? 'Item' : 'Mission'}</p>
+                                        </div>
+                                        <div className={`text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter ${t.tp === 'C' ? 'bg-red-50 text-red-400' : 'bg-primary/10 text-primary'}`}>
+                                            {t.tp === 'C' ? 'Common' : 'Personal'}
+                                        </div>
+                                    </div>
+                                );
+                            });
+                        })()}
+                    </div>
+                </div>
+            );
+        };
+
+
+        function App() {
+            const [u, setU] = useState(null), [honor, setHonor] = useState(''), [load, setLoad] = useState(true), [tab, setTab] = useState('home');
+            const [cT, setCT] = useState([]), [pT, setPT] = useState([]), [mat, setMat] = useState([]), [adm, setAdm] = useState(false);
+            const [cItems, setCItems] = useState([]), [pItems, setPItems] = useState([]), [completedCI, setCompletedCI] = useState([]);
+            const [subTab, setSubTab] = useState('tasks');
+            const [showSettings, setShowSettings] = useState(false), [them, setThem] = useState('#8b5cf6'), [clicks, setClicks] = useState(0), [pass, setPass] = useState(''), [showAuth, setShowAuth] = useState(false), [isMuted, setIsMuted] = useState(false);
+            const [ntIn, setNtIn] = useState(''), [ntDa, setNtDa] = useState(''), [tosAgreed, setTosAgreed] = useState(false), [timer, setTimer] = useState(null);
+            const [niIn, setNiIn] = useState(''), [niDa, setNiDa] = useState('');
+
+
+            const [ntDur, setNtDur] = useState('25');
+            const [remindText, setRemindText] = useState('');
+            const [targetEvent, setTargetEvent] = useState(null);
+            const [completedCT, setCompletedCT] = useState([]);
+
+            const [showAddForm, setShowAddForm] = useState(false);
+
+            const triggerBurst = (e) => {
+                const x = e.clientX / window.innerWidth;
+                const y = e.clientY / window.innerHeight;
+                confetti({
+                    particleCount: 50,
+                    spread: 60,
+                    origin: { x, y },
+                    colors: [them, '#ffffff', '#ffd700'],
+                    ticks: 200,
+                    gravity: 1.2,
+                    scalar: 0.7
+                });
+            };
+
+            useEffect(() => {
+                const sv = localStorage.getItem('kz_u'); if (sv) setU(sv);
+                const sh = localStorage.getItem('kz_honor'); if (sh !== null) setHonor(sh);
+                const th = localStorage.getItem('kz_theme'); if (th) setThem(th);
+
+                const tos = localStorage.getItem('kz_tos'); if (tos === 'true') setTosAgreed(true);
+                setLoad(false);
+
+                // --- Auto Cleanup: 1 Week Old Completed Tasks ---
+                const cleanup = async (currentUser) => {
+                    const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+
+                    // 1. Firestore Cleanup (Common Tasks/Items)
+                    // 注: 管理者が個別に「完了」にするフラグを持っていないため、
+                    // 現状は期限切れの古いアイテムを管理者が手動で消す運用がメインですが、
+                    // もし 'completed' フラグが true で作成から1週間経っていれば自動削除します。
+                    const collections = ['common_tasks', 'common_items'];
+                    for (const col of collections) {
+                        try {
+                            const snap = await db.collection(col).where('created', '<', oneWeekAgo).get();
+                            snap.docs.forEach(doc => {
+                                if (doc.data().completed === true) db.collection(col).doc(doc.id).delete();
+                            });
+                        } catch (e) { console.error("Firestore cleanup error:", e); }
+                    }
+
+                    // 2. LocalStorage Cleanup (Personal Tasks/Items)
+                    if (currentUser) {
+                        const localKeys = [
+                            { key: `kz_p_${currentUser}`, state: setPT },
+                            { key: `kz_items_${currentUser}`, state: setPItems }
+                        ];
+                        localKeys.forEach(({ key, state }) => {
+                            const data = JSON.parse(localStorage.getItem(key) || '[]');
+                            const filtered = data.filter(item => !(item.completed && item.id < oneWeekAgo));
+                            if (filtered.length !== data.length) {
+                                localStorage.setItem(key, JSON.stringify(filtered));
+                                state(filtered);
+                            }
+                        });
+
+                        // 3. Completed IDs Cleanup
+                        const compKeys = [`kz_c_${currentUser}`, `kz_ci_${currentUser}`];
+                        // 注: ID自体はcreated timestampなので、古いID（1週間以上前）を配列から削除
+                        // ただし、Firestoreの実データがない場合に配列に残り続けるのを防ぐ程度
+                    }
+                };
+                const currentUser = localStorage.getItem('kz_u');
+                cleanup(currentUser);
+
+                db.collection('common_tasks').orderBy('created', 'desc').onSnapshot(s => setCT(s.docs.map(d => ({ id: d.id, ...d.data() }))));
+                db.collection('common_items').orderBy('created', 'desc').onSnapshot(s => setCItems(s.docs.map(d => ({ id: d.id, ...d.data() }))));
+                db.collection('materials').orderBy('created', 'desc').onSnapshot(s => setMat(s.docs.map(d => ({ id: d.id, ...d.data() }))));
+                db.collection('reminders').doc('latest').onSnapshot(d => d.exists && setRemindText(d.data().text));
+                db.collection('reminders').doc('event').onSnapshot(d => d.exists && setTargetEvent(d.data()));
+                const m = localStorage.getItem('kz_muted'); if (m === 'true') setIsMuted(true);
+            }, []);
+            useEffect(() => {
+                if (u) {
+                    const s = localStorage.getItem(`kz_p_${u}`); if (s) setPT(JSON.parse(s));
+                    const c = localStorage.getItem(`kz_c_${u}`); if (c) setCompletedCT(JSON.parse(c));
+                    const items = localStorage.getItem(`kz_items_${u}`); if (items) setPItems(JSON.parse(items));
+                    const c_items = localStorage.getItem(`kz_ci_${u}`); if (c_items) setCompletedCI(JSON.parse(c_items));
+                }
+            }, [u]);
+            useEffect(() => {
+                if (u) {
+                    localStorage.setItem(`kz_p_${u}`, JSON.stringify(pT));
+                    localStorage.setItem(`kz_c_${u}`, JSON.stringify(completedCT));
+                    localStorage.setItem(`kz_items_${u}`, JSON.stringify(pItems));
+                    localStorage.setItem(`kz_ci_${u}`, JSON.stringify(completedCI));
+                } window._KZ_C = completedCT;
+            }, [pT, completedCT, pItems, completedCI]);
+
+            useEffect(() => { document.documentElement.style.setProperty('--primary-color', them); localStorage.setItem('kz_theme', them); }, [them]);
+            useEffect(() => { localStorage.setItem('kz_muted', isMuted); }, [isMuted]);
+
+            const cT_compCount = cT.filter(t => completedCT.includes(t.id)).length;
+            const pT_compCount = pT.filter(t => t.completed).length;
+            const cI_compCount = cItems.filter(t => completedCI.includes(t.id)).length;
+            const pI_compCount = pItems.filter(t => t.completed).length;
+
+            const totalProg = (cT.length + pT.length) > 0 ? Math.round((cT_compCount + pT_compCount) / (cT.length + pT.length) * 100) : 0;
+            const itemProg = (cItems.length + pItems.length) > 0 ? Math.round((cI_compCount + pI_compCount) / (cItems.length + pItems.length) * 100) : 0;
+
+            const prevProg = useRef(totalProg);
+            const prevItemProg = useRef(itemProg);
+
+            useEffect(() => {
+                if (totalProg === 100 && prevProg.current < 100) {
+                    confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+                }
+                prevProg.current = totalProg;
+            }, [totalProg]);
+
+            useEffect(() => {
+                if (itemProg === 100 && prevItemProg.current < 100 && (cItems.length + pItems.length) > 0) {
+                    const duration = 3 * 1000;
+                    const animationEnd = Date.now() + duration;
+                    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+                    const randomInRange = (min, max) => Math.random() * (max - min) + min;
+                    const interval = setInterval(function () {
+                        const timeLeft = animationEnd - Date.now();
+                        if (timeLeft <= 0) return clearInterval(interval);
+                        const particleCount = 50 * (timeLeft / duration);
+                        confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+                        confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+                    }, 250);
+                }
+                prevItemProg.current = itemProg;
+            }, [itemProg, cItems.length, pItems.length]);
+
+
+            const clickLogo = () => { const n = clicks + 1; setClicks(n); if (n >= 5) { setShowAuth(true); setClicks(0); } setTimeout(() => setClicks(0), 1000); };
+
+            if (load) return <div className="min-h-screen flex items-center justify-center font-black animate-pulse">K I Z U N A . . .</div>;
+            if (!tosAgreed) return <TOSModal onAgree={() => { localStorage.setItem('kz_tos', 'true'); setTosAgreed(true); }} />;
+            if (!u) return (
+                <div className="fixed inset-0 bg-primary flex items-center justify-center p-6">
+                    <div className="bg-white p-8 rounded-[50px] text-center w-full max-w-sm">
+                        <h1 className="text-3xl font-black mb-8">KIZUNA</h1>
+                        <form onSubmit={e => {
+                            e.preventDefault();
+                            const n = e.target.un.value;
+                            const h = e.target.honor.value;
+                            if (n) {
+                                setU(n); setHonor(h);
+                                localStorage.setItem('kz_u', n);
+                                localStorage.setItem('kz_honor', h);
+                            }
+                        }}>
+                            <input name="un" placeholder="名前を入力" className="w-full bg-gray-50 p-5 rounded-2xl mb-6 font-black text-center outline-none focus:ring-4 focus:ring-primary/10" required />
+                            <div className="grid grid-cols-2 gap-3 mb-8">
+                                {[
+                                    { v: 'くん', l: 'くん' }, { v: 'ちゃん', l: 'ちゃん' },
+                                    { v: 'さん', l: 'さん' }, { v: '', l: '呼び捨て' }
+                                ].map(opt => (
+                                    <label key={opt.v} className="relative cursor-pointer group">
+                                        <input type="radio" name="honor" value={opt.v} className="peer sr-only" defaultChecked={opt.v === ''} />
+                                        <div className="w-full py-3 rounded-xl border-2 border-gray-100 font-bold text-gray-400 text-xs peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary transition-all group-hover:bg-gray-50">
+                                            {opt.l}
+                                        </div>
+                                    </label>
+                                ))}
+                            </div>
+                            <button className="w-full bg-primary text-white font-black py-5 rounded-2xl shadow-lg shadow-primary/20 active:scale-95 transition-all">はじめる</button>
+                        </form>
+                    </div>
+                </div>
+            );
+
+
+            if (adm) {
+                const handleDel = async (col, id) => {
+                    if (!confirm(`本当にこのアイテムを削除しますか？\n(Collection: ${col})`)) return;
+                    try {
+                        await db.collection(col).doc(id).delete();
+                        confetti({ particleCount: 100 });
+                    } catch (e) { alert('削除に失敗しました: ' + e.message); }
+                };
+                return <AdminPortal onClose={() => setAdm(false)} commonTasks={cT} commonItems={cItems} materials={mat} delItem={handleDel} />;
+            }
+
+
+            return (
+                <div className="min-h-screen max-w-md mx-auto relative bg-[#fafafa] overflow-x-hidden pb-40 font-sans">
+                    {showAuth && (
+                        <div className="fixed inset-0 z-[600] bg-black/95 backdrop-blur-3xl flex items-center justify-center p-6 animate-slide-up">
+                            <div className="bg-white rounded-[50px] p-12 w-full max-w-sm text-center">
+                                <div className="text-5xl mb-8">🔒</div><h2 className="text-2xl font-black mb-10">ADMIN AUTH</h2>
+                                <input type="password" value={pass} onChange={e => setPass(e.target.value)} placeholder="••••" className="w-full bg-gray-50 p-8 rounded-3xl text-center mb-8 font-black text-2xl outline-none" />
+                                <div className="flex gap-4"><button onClick={() => setShowAuth(false)} className="flex-1 bg-gray-50 text-gray-400 font-black py-5 rounded-2xl">CANCEL</button><button onClick={() => { if (pass === '8810') { setAdm(true); setShowAuth(false); setPass(''); } else { alert('ERROR'); setPass(''); } }} className="flex-1 bg-primary text-white font-black py-5 rounded-2xl">LOGIN</button></div>
+                            </div>
+                        </div>
+                    )}
+                    {timer && <TimerModal task={timer} initialDuration={timer.duration} onComplete={() => { const n = [...pT]; const i = n.findIndex(x => x.id === timer.id); if (i !== -1) { n[i].completed = true; setPT(n); } setTimer(null); confetti(); }} onClose={() => setTimer(null)} isMuted={isMuted} setIsMuted={setIsMuted} />}
+                    <header className="sticky top-0 z-40 bg-white/70 backdrop-blur-xl px-7 py-6 flex justify-between items-center">
+                        <div className="flex items-center gap-4">
+                            <h1 onClick={clickLogo} className="text-2xl font-black tracking-tighter cursor-pointer select-none">KIZUNA</h1>
+                            <button onClick={() => setShowSettings(true)} className="p-2.5 bg-gray-100 text-gray-400 rounded-xl active:scale-90 transition-all">
+                                <Icons.Settings className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="bg-gray-100 px-4 py-2 rounded-2xl text-[10px] font-black uppercase text-gray-400">{u}{honor}</div>
+                    </header>
+
+                    <main className="px-6 space-y-8 pt-4">
+                        {tab === 'home' && <>
+                            <div className="bg-gray-900 text-white p-10 rounded-[50px] shadow-2xl relative overflow-hidden">
+                                {(() => {
+                                    const hr = new Date().getHours();
+                                    const greeting = hr >= 5 && hr < 11 ? 'おはよう' : hr >= 11 && hr < 18 ? 'こんにちは' : 'こんばんは';
+                                    return <h2 className="text-2xl font-black mb-1 italic">{greeting}、{u}{honor}！</h2>;
+                                })()}
+
+                                <p className="text-white/30 text-[9px] font-black uppercase tracking-widest">PROGRESS</p>
+
+                                <div className="text-6xl font-black tracking-tighter mt-4">{totalProg}%</div>
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-[60px]" />
+                            </div>
+
+                            {targetEvent && (() => {
+                                const targetDate = new Date(targetEvent.date);
+                                const today = new Date();
+                                today.setHours(0, 0, 0, 0); targetDate.setHours(0, 0, 0, 0);
+                                const diff = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
+                                if (diff < 0) return null;
+                                return (
+                                    <div className="bg-white p-8 rounded-[50px] shadow-sm border border-gray-100 flex items-center justify-between overflow-hidden relative group active:scale-[0.98] transition-all">
+                                        <div className="relative z-10">
+                                            <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] mb-2">{targetEvent.title} まで</p>
+                                            <div className="flex items-baseline gap-2">
+                                                <span className="text-5xl font-black text-gray-800 tracking-tighter">{diff}</span>
+                                                <span className="text-xl font-black text-gray-400">DAYS</span>
+                                            </div>
+                                        </div>
+                                        <div className="text-4xl grayscale group-hover:grayscale-0 transition-all duration-700 animate-bounce-soft">🏁</div>
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-gray-50 rounded-full -mr-16 -mt-16 group-hover:bg-primary/5 transition-colors" />
+                                    </div>
+                                );
+                            })()}
+
+                            {remindText && (
+                                <div className="bg-white border-2 border-primary/20 p-6 rounded-[35px] shadow-sm flex items-center gap-4 animate-bounce-soft relative">
+                                    <div className="w-10 h-10 bg-primary/10 rounded-2xl flex items-center justify-center text-primary flex-shrink-0 animate-pulse">⚡</div>
+                                    <div className="flex-1">
+                                        <p className="text-[7px] font-black text-primary/50 uppercase tracking-widest mb-1">委員長からのメッセージ</p>
+                                        <p className="text-[13px] font-black text-gray-800 leading-tight">{remindText}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="space-y-6">
+                                <h3 className="font-black text-lg text-gray-800 ml-2 tracking-tight">MISSION</h3>
+                                <div className="space-y-4">
+                                    {cT.length === 0 ? <div className="p-16 text-center text-xs font-black text-gray-300 border-2 border-dashed border-gray-100 rounded-[40px]">No Mission</div> :
+                                        [...cT].sort((a, b) => (completedCT.includes(a.id) ? 1 : 0) - (completedCT.includes(b.id) ? 1 : 0)).slice(0, 3).map(t => {
+                                            const isDone = completedCT.includes(t.id);
+                                            return <div key={t.id} onClick={(e) => { if (!isDone) triggerBurst(e); const next = isDone ? completedCT.filter(id => id !== t.id) : [...completedCT, t.id]; setCompletedCT(next); }} className={`p-5 rounded-[35px] border flex items-center gap-5 transition-all duration-500 ${isDone ? 'opacity-30 grayscale bg-gray-50 translate-x-1' : 'bg-white shadow-md'}`}><div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all ${isDone ? 'bg-primary border-primary animate-pop' : 'border-gray-200'}`}>{isDone && <Icons.CheckCircle className="text-white w-5 h-5" />}</div><p className="text-[13px] font-black truncate text-gray-800">{t.title}</p></div>;
+                                        })
+                                    }
+                                </div>
+                            </div>
+                            <div className="space-y-6">
+                                <h3 className="font-black text-lg text-gray-800 ml-2 tracking-tight">BELONGINGS</h3>
+                                <div className="space-y-4">
+                                    {cItems.length === 0 ? <div className="p-16 text-center text-xs font-black text-gray-300 border-2 border-dashed border-gray-100 rounded-[40px]">No Items</div> :
+                                        [...cItems].sort((a, b) => (completedCI.includes(a.id) ? 1 : 0) - (completedCI.includes(b.id) ? 1 : 0)).slice(0, 3).map(t => {
+                                            const isDone = completedCI.includes(t.id);
+                                            return <div key={t.id} onClick={(e) => { if (!isDone) triggerBurst(e); const next = isDone ? completedCI.filter(id => id !== t.id) : [...completedCI, t.id]; setCompletedCI(next); }} className={`p-5 rounded-[35px] border flex items-center gap-5 transition-all duration-500 ${isDone ? 'opacity-30 grayscale bg-gray-50 translate-x-1' : 'bg-white shadow-md'}`}><div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all ${isDone ? 'bg-primary border-primary animate-pop' : 'border-gray-200'}`}>{isDone && <Icons.CheckCircle className="text-white w-5 h-5" />}</div><p className="text-[13px] font-black truncate text-gray-800">{t.title}</p></div>;
+                                        })
+                                    }
+                                </div>
+                            </div>
+                        </>}
+                        {tab === 'tasks' && <div className="space-y-10 animate-slide-up pb-20">
+                            {/* SUB TAB SWITCHER */}
+                            <div className="flex gap-2 p-1.5 bg-gray-100 rounded-[35px]">
+                                <button onClick={() => setSubTab('tasks')} className={`flex-1 py-4 rounded-[28px] font-black text-xs transition-all ${subTab === 'tasks' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400'}`}>HOMEWORK</button>
+                                <button onClick={() => setSubTab('items')} className={`flex-1 py-4 rounded-[28px] font-black text-xs transition-all ${subTab === 'items' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400'}`}>BELONGINGS</button>
+                            </div>
+
+                            {subTab === 'tasks' ? (
+                                <>
+                                    {/* COMMON MISSIONS SECTION */}
+                                    <div className="space-y-6">
+                                        <div className="flex items-center justify-between px-2">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center"><Icons.List className="w-5 h-5" /></div>
+                                                <h3 className="font-black text-lg text-gray-800 tracking-tight">COMMON MISSIONS</h3>
+                                            </div>
+                                            <div className="bg-red-50 text-red-500 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">{cT.length}</div>
+                                        </div>
+                                        <div className="grid grid-cols-1 gap-4">
+                                            {cT.length === 0 ? (
+                                                <div className="p-16 text-center text-xs font-black text-gray-300 border-2 border-dashed border-gray-100 rounded-[40px] uppercase">No Common Missions</div>
+                                            ) : (
+                                                [...cT].sort((a, b) => (completedCT.includes(a.id) ? 1 : 0) - (completedCT.includes(b.id) ? 1 : 0)).map(t => {
+                                                    const isDone = completedCT.includes(t.id);
+                                                    return (
+                                                        <div key={t.id} className={`p-6 rounded-[40px] border flex items-center gap-6 transition-all ${isDone ? 'opacity-30 grayscale bg-gray-50 border-transparent translate-x-1' : 'bg-white shadow-sm border-gray-100'}`}>
+                                                            <div onClick={(e) => {
+                                                                if (!isDone) triggerBurst(e);
+                                                                const next = isDone ? completedCT.filter(id => id !== t.id) : [...completedCT, t.id];
+                                                                setCompletedCT(next);
+                                                            }} className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all cursor-pointer ${isDone ? 'bg-primary border-primary animate-pop' : 'border-gray-100'}`}>
+                                                                {isDone && <Icons.CheckCircle className="text-white w-6 h-6" />}
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className={`font-black text-sm truncate text-gray-800 ${isDone ? 'line-through' : ''}`}>{t.title}</p>
+                                                                {t.deadline && <p className="text-[9px] font-black text-gray-400 mt-1 uppercase tracking-widest">Until: {t.deadline}</p>}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* MY TASKS SECTION */}
+                                    <div className="space-y-6">
+                                        <div className="flex items-center justify-between px-2">
+                                            <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setShowAddForm(!showAddForm)}>
+                                                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all ${showAddForm ? 'bg-primary text-white rotate-45' : 'bg-blue-50 text-blue-500 group-hover:bg-blue-100'}`}><Icons.Plus className="w-5 h-5" /></div>
+                                                <h3 className="font-black text-lg text-gray-800 tracking-tight">MY TASKS</h3>
+                                            </div>
+                                            <div className="bg-blue-50 text-blue-500 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">{pT.length}</div>
+                                        </div>
+
+                                        {showAddForm && (
+                                            <div className="bg-white p-8 rounded-[45px] border-2 border-primary/10 shadow-xl space-y-6 animate-slide-up">
+                                                <input placeholder="何を頑張る？" value={ntIn} onChange={e => setNtIn(e.target.value)} className="w-full bg-gray-50 p-6 rounded-3xl font-black outline-none border-none focus:ring-4 focus:ring-primary/10 transition-all text-sm" />
+                                                <div className="space-y-4">
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {[5, 10, 15, 20, 25].map(m => (
+                                                            <button key={m} onClick={() => setNtDur(m.toString())} className={`flex-1 py-3 rounded-2xl font-black text-[10px] transition-all ${ntDur === m.toString() ? 'bg-primary text-white shadow-lg' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}>{m} MIN</button>
+                                                        ))}
+                                                    </div>
+                                                    <div className="space-y-3">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="flex-1 bg-gray-50 rounded-3xl p-2 flex items-center justify-between border border-gray-100">
+                                                                <button onClick={() => setNtDur(Math.max(1, (parseInt(ntDur) || 1) - 1).toString())} className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-gray-400 shadow-sm active:scale-90 transition-all"><span className="text-xl font-bold">−</span></button>
+                                                                <div className="flex flex-col items-center">
+                                                                    <span className="text-[14px] font-black text-primary">{ntDur || 0}</span>
+                                                                    <span className="text-[8px] font-black text-gray-300 uppercase tracking-widest">Minutes</span>
+                                                                </div>
+                                                                <button onClick={() => setNtDur(((parseInt(ntDur) || 0) + 1).toString())} className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-primary shadow-sm active:scale-90 transition-all"><span className="text-xl font-bold">＋</span></button>
+                                                            </div>
+                                                            <input type="datetime-local" value={ntDa} onChange={e => setNtDa(e.target.value)} className="flex-1 bg-gray-50 p-4 h-[64px] rounded-3xl text-[10px] font-black outline-none border-none" />
+                                                        </div>
+                                                        <button onClick={() => { if (!ntIn) return; setPT([{ id: Date.now(), title: ntIn, date: ntDa, completed: false, duration: parseInt(ntDur) || 25 }, ...pT]); setNtIn(''); setNtDa(''); setNtDur('25'); setShowAddForm(false); }} className="w-full bg-primary text-white py-6 rounded-3xl shadow-xl shadow-primary/20 active:scale-95 transition-all flex items-center justify-center gap-3">
+                                                            <Icons.Plus className="w-6 h-6" />
+                                                            <span className="font-black text-sm tracking-widest uppercase">Add Mission</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="grid grid-cols-1 gap-4">
+                                            {pT.length === 0 ? (
+                                                <div className="p-16 text-center text-xs font-black text-gray-300 border-2 border-dashed border-gray-100 rounded-[40px] uppercase">No Personal Tasks</div>
+                                            ) : (
+                                                [...pT].sort((a, b) => (a.completed ? 1 : 0) - (b.completed ? 1 : 0)).map(t => (
+                                                    <div key={t.id} className={`p-6 rounded-[40px] border flex items-center gap-6 transition-all ${t.completed ? 'opacity-30 grayscale bg-gray-50 border-transparent translate-x-1' : 'bg-white shadow-sm border-gray-100'}`}>
+                                                        <div onClick={(e) => {
+                                                            if (!t.completed) triggerBurst(e);
+                                                            const n = [...pT];
+                                                            const i = n.findIndex(x => x.id === t.id);
+                                                            n[i].completed = !n[i].completed;
+                                                            setPT(n);
+                                                        }} className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all cursor-pointer ${t.completed ? 'bg-primary border-primary animate-pop' : 'border-gray-100'}`}>
+                                                            {t.completed && <Icons.CheckCircle className="text-white w-6 h-6" />}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className={`font-black text-sm truncate text-gray-800 ${t.completed ? 'line-through' : ''}`}>{t.title}</p>
+                                                            <div className="flex items-center gap-3 mt-1">
+                                                                <span className="text-[9px] font-black text-primary uppercase tracking-widest bg-primary/10 px-2 py-0.5 rounded-md">{t.duration || 25}min</span>
+                                                                {t.date && <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{t.date.replace('T', ' ')}</p>}
+                                                            </div>
+                                                        </div>
+                                                        {!t.completed && (
+                                                            <button onClick={() => setTimer({ id: t.id, title: t.title, duration: t.duration || 25 })} className="p-4 bg-primary text-white rounded-2xl shadow-lg shadow-primary/20 active:scale-90 transition-all">
+                                                                <Icons.Play className="w-4 h-4 fill-current" />
+                                                            </button>
+                                                        )}
+                                                        <button onClick={() => { if (confirm('削除しますか？')) setPT(pT.filter(x => x.id !== t.id)); }} className="p-3 text-gray-200 hover:text-red-400 transition-colors">
+                                                            <Icons.X className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    {/* COMMON ITEMS SECTION */}
+                                    <div className="space-y-6">
+                                        <div className="flex items-center justify-between px-2">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-yellow-50 text-yellow-600 rounded-2xl flex items-center justify-center"><Icons.FileText className="w-5 h-5" /></div>
+                                                <h3 className="font-black text-lg text-gray-800 tracking-tight">COMMON ITEMS</h3>
+                                            </div>
+                                            <div className="bg-yellow-50 text-yellow-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">{cItems.length}</div>
+                                        </div>
+                                        <div className="grid grid-cols-1 gap-4">
+                                            {cItems.length === 0 ? (
+                                                <div className="p-16 text-center text-xs font-black text-gray-300 border-2 border-dashed border-gray-100 rounded-[40px] uppercase">No Common Items</div>
+                                            ) : (
+                                                [...cItems].sort((a, b) => (completedCI.includes(a.id) ? 1 : 0) - (completedCI.includes(b.id) ? 1 : 0)).map(t => {
+                                                    const isDone = completedCI.includes(t.id);
+                                                    return (
+                                                        <div key={t.id} className={`p-6 rounded-[40px] border flex items-center gap-6 transition-all ${isDone ? 'opacity-30 grayscale bg-gray-50 border-transparent translate-x-1' : 'bg-white shadow-sm border-gray-100'}`}>
+                                                            <div onClick={(e) => {
+                                                                if (!isDone) triggerBurst(e);
+                                                                const next = isDone ? completedCI.filter(id => id !== t.id) : [...completedCI, t.id];
+                                                                setCompletedCI(next);
+                                                            }} className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all cursor-pointer ${isDone ? 'bg-primary border-primary animate-pop' : 'border-gray-100'}`}>
+                                                                {isDone && <Icons.CheckCircle className="text-white w-6 h-6" />}
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className={`font-black text-sm truncate text-gray-800 ${isDone ? 'line-through' : ''}`}>{t.title}</p>
+                                                                {t.deadline && <p className="text-[9px] font-black text-gray-400 mt-1 uppercase tracking-widest">Until: {t.deadline}</p>}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* MY ITEMS SECTION */}
+                                    <div className="space-y-6">
+                                        <div className="flex items-center justify-between px-2">
+                                            <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setShowAddForm(!showAddForm)}>
+                                                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all ${showAddForm ? 'bg-primary text-white rotate-45' : 'bg-yellow-50 text-yellow-600 group-hover:bg-yellow-100'}`}><Icons.Plus className="w-5 h-5" /></div>
+                                                <h3 className="font-black text-lg text-gray-800 tracking-tight">MY ITEMS</h3>
+                                            </div>
+                                            <div className="bg-yellow-50 text-yellow-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">{pItems.length}</div>
+                                        </div>
+
+                                        {showAddForm && (
+                                            <div className="bg-white p-8 rounded-[45px] border-2 border-primary/10 shadow-xl space-y-6 animate-slide-up">
+                                                <input placeholder="必要なものは？" value={niIn} onChange={e => setNiIn(e.target.value)} className="w-full bg-gray-50 p-6 rounded-3xl font-black outline-none border-none focus:ring-4 focus:ring-primary/10 transition-all text-sm" />
+                                                <div className="space-y-4">
+                                                    <div className="space-y-3">
+                                                        <input type="date" value={niDa} onChange={e => setNiDa(e.target.value)} className="w-full bg-gray-50 p-6 rounded-3xl text-xs font-black outline-none border-none" />
+                                                        <button onClick={() => { if (!niIn) return; setPItems([{ id: Date.now(), title: niIn, date: niDa, completed: false }, ...pItems]); setNiIn(''); setNiDa(''); setShowAddForm(false); }} className="w-full bg-primary text-white py-6 rounded-3xl shadow-xl shadow-primary/20 active:scale-95 transition-all flex items-center justify-center gap-3">
+                                                            <Icons.Plus className="w-6 h-6" />
+                                                            <span className="font-black text-sm tracking-widest uppercase">Add Item</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="grid grid-cols-1 gap-4">
+                                            {pItems.length === 0 ? (
+                                                <div className="p-16 text-center text-xs font-black text-gray-300 border-2 border-dashed border-gray-100 rounded-[40px] uppercase">No Personal Items</div>
+                                            ) : (
+                                                [...pItems].sort((a, b) => (a.completed ? 1 : 0) - (b.completed ? 1 : 0)).map(t => (
+                                                    <div key={t.id} className={`p-6 rounded-[40px] border flex items-center gap-6 transition-all ${t.completed ? 'opacity-30 grayscale bg-gray-50 border-transparent translate-x-1' : 'bg-white shadow-sm border-gray-100'}`}>
+                                                        <div onClick={(e) => {
+                                                            if (!t.completed) triggerBurst(e);
+                                                            const n = [...pItems];
+                                                            const i = n.findIndex(x => x.id === t.id);
+                                                            n[i].completed = !n[i].completed;
+                                                            setPItems(n);
+                                                        }} className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all cursor-pointer ${t.completed ? 'bg-primary border-primary animate-pop' : 'border-gray-100'}`}>
+                                                            {t.completed && <Icons.CheckCircle className="text-white w-6 h-6" />}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className={`font-black text-sm truncate text-gray-800 ${t.completed ? 'line-through' : ''}`}>{t.title}</p>
+                                                            {t.date && <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-1">{t.date}</p>}
+                                                        </div>
+                                                        <button onClick={() => { if (confirm('削除しますか？')) setPItems(pItems.filter(x => x.id !== t.id)); }} className="p-3 text-gray-200 hover:text-red-400 transition-colors">
+                                                            <Icons.X className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>}
+                        {tab === 'materials' && <div className="space-y-4 pt-4">{mat.length === 0 ? <div className="p-32 text-center font-black text-gray-200">Empty</div> : mat.map(m => <div key={m.id} onClick={() => window.open(m.url, '_blank')} className="bg-white p-8 rounded-[45px] border border-gray-100 flex items-center gap-6 cursor-pointer hover:shadow-xl transition-all"><div className="w-16 h-16 bg-red-50 text-red-500 rounded-3xl flex items-center justify-center"><Icons.FileText className="w-8 h-8" /></div><p className="flex-1 font-black text-gray-800 truncate">{m.title}</p></div>)}</div>}
+                        {tab === 'calendar' && <MonthlyCalendar commonTasks={cT} personalTasks={pT} commonItems={cItems} personalItems={pItems} completedCT={completedCT} setCompletedCT={setCompletedCT} completedCI={completedCI} setCompletedCI={setCompletedCI} pT={pT} setPT={setPT} pI={pItems} setPI={setPItems} triggerBurst={triggerBurst} />}
+
+                        {tab === 'info' && (
+                            <div className="space-y-12 animate-slide-up py-10 flex flex-col items-center">
+                                <div className="relative w-64 h-64 flex items-center justify-center">
+                                    <svg className="w-full h-full -rotate-90" viewBox="0 0 256 256">
+                                        <circle cx="128" cy="128" r="100" stroke="currentColor" strokeWidth="20" fill="transparent" className="text-gray-100" />
+                                        <circle cx="128" cy="128" r="100" stroke="currentColor" strokeWidth="20" fill="transparent" strokeDasharray={2 * Math.PI * 100} strokeDashoffset={2 * Math.PI * 100 * (1 - totalProg / 100)} strokeLinecap="round" className="text-primary transition-all duration-1000 ease-out" />
+                                    </svg>
+                                    <div className="absolute flex flex-col items-center">
+                                        <span className="text-6xl font-black tracking-tighter text-gray-800">{totalProg}%</span>
+                                        <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest mt-2 px-4 py-1 bg-gray-50 rounded-full">Total Progress</span>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4 w-full">
+                                    <div className="bg-white p-6 rounded-[35px] border border-gray-50 shadow-sm">
+                                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1 text-center">Common Missions</p>
+                                        <div className="text-center">
+                                            <span className="text-2xl font-black text-gray-800">{cT_compCount}</span>
+                                            <span className="text-sm font-black text-gray-300 mx-1">/</span>
+                                            <span className="text-sm font-bold text-gray-400">{cT.length}</span>
+                                        </div>
+                                    </div>
+                                    <div className="bg-white p-6 rounded-[35px] border border-gray-50 shadow-sm">
+                                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1 text-center">My Tasks</p>
+                                        <div className="text-center">
+                                            <span className="text-2xl font-black text-primary">{pT_compCount}</span>
+                                            <span className="text-sm font-black text-gray-200 mx-1">/</span>
+                                            <span className="text-sm font-bold text-gray-300">{pT.length}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="w-full bg-gray-900 p-8 rounded-[45px] text-white flex items-center justify-between overflow-hidden relative">
+                                    <div className="relative z-10">
+                                        <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-1">Mission Status</p>
+                                        <h4 className="text-lg font-black">{totalProg === 100 ? 'ALL CLEAR! 🎉' : 'KEEP GOING! 🔥'}</h4>
+                                    </div>
+                                    <div className="w-16 h-16 bg-white/10 rounded-3xl flex items-center justify-center relative z-10">
+                                        <Icons.Activity className="w-8 h-8 text-primary" />
+                                    </div>
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-3xl" />
+                                </div>
+                            </div>
+                        )}
+                    </main>
+                    <nav className="fixed bottom-8 left-4 right-4 bg-white/90 backdrop-blur-2xl border border-gray-100 px-1 py-4 rounded-[40px] flex justify-around items-center z-40 shadow-2xl">
+                        {[
+                            { id: 'home', l: 'HOME', i: Icons.Home },
+                            { id: 'tasks', l: 'LIST', i: Icons.List },
+                            { id: 'info', l: 'INFO', i: Icons.Activity },
+                            { id: 'materials', l: 'DATA', i: Icons.FileText },
+                            { id: 'calendar', l: 'PLAN', i: Icons.Calendar }
+                        ].map(t => (
+                            <button key={t.id} onClick={() => setTab(t.id)} className={`flex flex-col items-center gap-2 px-3 py-2 rounded-2xl transition-all ${tab === t.id ? 'text-primary scale-110' : 'text-gray-300'}`}>
+                                <t.i className="w-5 h-5" />
+                                <span className="text-[9px] font-black uppercase tracking-tighter">{t.l}</span>
+                            </button>
+                        ))}
+                    </nav>
+                    {showSettings && (
+                        <div className="fixed inset-0 z-[700] bg-gray-50 flex flex-col font-black animate-slide-up">
+                            <header className="p-10 border-b bg-white flex justify-between items-center shadow-sm"><h2 className="text-3xl font-black">SETTINGS</h2><button onClick={() => setShowSettings(false)} className="bg-gray-100 p-4 rounded-2xl active:scale-95 transition-all"><Icons.X /></button></header>
+                            <main className="flex-1 p-8 space-y-10 overflow-y-auto scrollbar-hide">
+                                {/* Theme Section */}
+                                <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100 space-y-6">
+                                    <div className="flex items-center gap-3 ml-2">
+                                        <div className="w-1 h-4 bg-primary rounded-full" />
+                                        <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em]">Appearance</p>
+                                    </div>
+                                    <div className="grid grid-cols-6 gap-4">
+                                        {['#8b5cf6', '#ec4899', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#1f2937', '#64748b'].map(c => (
+                                            <button
+                                                key={c}
+                                                onClick={() => setThem(c)}
+                                                className={`w-full aspect-square rounded-2xl transition-all duration-300 relative flex items-center justify-center ${them === c ? 'scale-110 shadow-lg' : 'opacity-40 hover:opacity-100'}`}
+                                                style={{ backgroundColor: c }}
+                                            >
+                                                {them === c && <div className="w-2 h-2 bg-white rounded-full shadow-sm animate-pop" />}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Profile Section */}
+                                <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100 space-y-6">
+                                    <div className="flex items-center gap-3 ml-2">
+                                        <div className="w-1 h-4 bg-primary rounded-full" />
+                                        <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em]">Profile</p>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {[
+                                            { v: 'くん', l: 'くん' }, { v: 'ちゃん', l: 'ちゃん' },
+                                            { v: 'さん', l: 'さん' }, { v: '', l: '呼び捨て' }
+                                        ].map(opt => (
+                                            <button
+                                                key={opt.v}
+                                                onClick={() => { setHonor(opt.v); localStorage.setItem('kz_honor', opt.v); }}
+                                                className={`py-4 rounded-2xl font-black text-xs transition-all border-2 ${honor === opt.v ? 'border-primary bg-primary/5 text-primary' : 'border-gray-50 text-gray-400 opacity-60'}`}
+                                            >
+                                                {opt.l}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Sound Section */}
+                                <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100 space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3 ml-2">
+                                            <div className="w-1 h-4 bg-primary rounded-full" />
+                                            <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em]">Sound</p>
+                                        </div>
+                                        <button onClick={() => setIsMuted(!isMuted)} className={`w-14 h-8 rounded-full transition-all relative ${isMuted ? 'bg-gray-200' : 'bg-primary'}`}>
+                                            <div className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-sm transition-all ${isMuted ? 'left-1' : 'left-7'}`} />
+                                        </button>
+                                    </div>
+                                    <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-[25px]">
+                                        <div className={`p-3 rounded-xl ${isMuted ? 'bg-gray-100 text-gray-400' : 'bg-white text-primary shadow-sm'}`}>
+                                            {isMuted ? <Icons.VolumeX className="w-5 h-5" /> : <Icons.Volume2 className="w-5 h-5" />}
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-[11px] font-black text-gray-800">{isMuted ? 'Muted' : 'Alarm On'}</p>
+                                            <p className="text-[9px] text-gray-400 font-bold mt-0.5">Timer notification sound</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Danger Zone / Account Section */}
+                                <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100 space-y-6">
+                                    <div className="flex items-center gap-3 ml-2">
+                                        <div className="w-1 h-4 bg-red-400 rounded-full" />
+                                        <p className="text-[10px] text-red-400/60 font-black uppercase tracking-[0.2em]">System</p>
+                                    </div>
+                                    <button
+                                        onClick={() => { if (confirm('LOGOUT?')) { setU(null); localStorage.removeItem('kz_u'); window.location.reload(); } }}
+                                        className="w-full bg-red-50 hover:bg-red-100 text-red-500 py-6 rounded-[30px] font-black text-xs tracking-[0.1em] uppercase flex items-center justify-center gap-3 active:scale-[0.98] transition-all border border-red-100"
+                                    >
+                                        <Icons.Trash className="w-4 h-4" />
+                                        <span>Logout Session</span>
+                                    </button>
+                                </div>
+
+                                {/* Version Info */}
+                                <div className="text-center py-4">
+                                    <div className="inline-block px-6 py-2 bg-gray-100 rounded-full">
+                                        <p className="text-[9px] text-gray-400 font-black tracking-widest uppercase">KIZUNA Premium v1.2.4</p>
+                                    </div>
+                                    <p className="text-[8px] text-gray-300 font-bold mt-3 tracking-[0.3em] uppercase">17th Production Dept.</p>
+                                </div>
+                            </main>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+
+</html>
